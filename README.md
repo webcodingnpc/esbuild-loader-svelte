@@ -1,29 +1,34 @@
 # esbuild-loader-svelte
 
-esbuild 插件集合，用于编译 **Svelte 5** 组件、SCSS 样式、SSR 空桩替换、源码导入和元信息提取。
+A collection of esbuild plugins for compiling **Svelte 5** components, SCSS styles, SSR stub replacement, raw source import, and component metadata extraction.
 
-## 特性
+[中文文档](./README.zh-CN.md)
 
-- **sveltePlugin** — 编译 `.svelte` 文件，支持 TypeScript 和 SCSS 预处理
-- **scssPlugin** — 编译 `.scss` 文件为 CSS
-- **ssrStubPlugin** — SSR 构建时将浏览器专属模块替换为空桩（使用外部模板文件）
-- **rawPlugin** — 以原始文本方式导入文件（`?raw` 后缀），适用于代码展示
-- **metaPlugin** — 提取 Svelte 组件元信息（`?meta` 后缀），包括 props、源码等
-- **renderTemplate / readTemplate** — 模板引擎，读取并渲染 `{{KEY}}` 占位符模板
-- 兼容 **CommonJS** 和 **ES Modules**
-- 支持 Svelte 5 Runes 模式
+## Features
 
-## 安装
+- **sveltePlugin** — Compile `.svelte` files with TypeScript and SCSS preprocessing
+- **scssPlugin** — Compile `.scss` files to CSS
+- **ssrStubPlugin** — Replace browser-specific modules with stubs during SSR builds (uses external template files)
+- **rawPlugin** — Import files as raw text (`?raw` suffix) for code display
+- **metaPlugin** — Extract Svelte component metadata (`?meta` suffix) including props, source code, etc.
+- **obfuscatorPlugin** — JavaScript code obfuscation with RC4 encryption, control flow flattening
+- **renderTemplate / readTemplate** — Template engine for reading and rendering `{{KEY}}` placeholder templates
+- Compatible with **CommonJS** and **ES Modules**
+- Supports Svelte 5 Runes mode
+
+## Installation
 
 ```bash
 npm install esbuild-loader-svelte esbuild svelte --save-dev
-# SCSS 支持（可选）
+# SCSS support (optional)
 npm install sass --save-dev
+# Code obfuscation (optional)
+npm install javascript-obfuscator --save-dev
 ```
 
-## 使用
+## Usage
 
-### 全量引入
+### Full Import
 
 ```js
 import {
@@ -41,13 +46,14 @@ await esbuild.build({
 })
 ```
 
-### 按需引入
+### On-Demand Import
 
 ```js
 import { sveltePlugin } from 'esbuild-loader-svelte/svelte'
 import { scssPlugin } from 'esbuild-loader-svelte/scss'
 import { rawPlugin } from 'esbuild-loader-svelte/raw'
 import { metaPlugin } from 'esbuild-loader-svelte/meta'
+import { obfuscatorPlugin } from 'esbuild-loader-svelte/obfuscator'
 import { renderTemplate } from 'esbuild-loader-svelte/templates'
 ```
 
@@ -61,115 +67,125 @@ const { sveltePlugin, scssPlugin, rawPlugin, metaPlugin } = require('esbuild-loa
 
 ### `sveltePlugin(options?)`
 
-编译 `.svelte` 文件为 JavaScript。
+Compiles `.svelte` files to JavaScript.
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `generate` | `'client' \| 'server'` | `'client'` | 编译模式 |
-| `sassModule` | `object` | 自动导入 | 手动传入 sass 模块 |
-| `filterWarnings` | `(code: string) => boolean` | 过滤 a11y 警告 | 返回 `true` 则静默该警告 |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `generate` | `'client' \| 'server'` | `'client'` | Compilation mode |
+| `sassModule` | `object` | Auto-imported | Manually provide sass module |
+| `filterWarnings` | `(code: string) => boolean` | Filters a11y warnings | Return `true` to silence warning |
 
 ### `scssPlugin(options?)`
 
-编译 `.scss` 文件为 CSS。
+Compiles `.scss` files to CSS.
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `sassModule` | `object` | 自动导入 | 手动传入 sass 模块 |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `sassModule` | `object` | Auto-imported | Manually provide sass module |
 
 ### `ssrStubPlugin(stubPaths)`
 
-SSR 构建时将指定路径的模块替换为空桩。桩代码来自外部模板文件（`src/templates/`），不再使用内联字符串。
+Replaces specified module paths with empty stubs during SSR builds. Stub code comes from external template files (`src/templates/`).
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `stubPaths` | `string[]` | 匹配的路径片段，命中则替换为空桩 |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `stubPaths` | `string[]` | Path fragments to match; matched modules are replaced with stubs |
 
 ```js
-// 示例：SSR 构建时跳过路由和某些组件
+// Example: skip router and heavy components during SSR
 ssrStubPlugin(['src/router', 'views/HeavyComponent'])
 ```
 
 ### `rawPlugin()`
 
-以原始文本方式导入文件，适用于代码展示场景。
+Import files as raw text for code display scenarios.
 
 ```js
-// 构建配置
+// Build config
 plugins: [rawPlugin()]
 
-// 使用：在代码中通过 ?raw 后缀导入
+// Usage: import via ?raw suffix
 import buttonCode from './Button.svelte?raw'
-// buttonCode 是 Button.svelte 的完整源码字符串
-
-// 在 DemoBlock 中使用
-<DemoBlock title="按钮" code={buttonCode}>
-    <Button type="primary">主要按钮</Button>
-</DemoBlock>
+// buttonCode is the full source code string of Button.svelte
 ```
 
 ### `metaPlugin(options?)`
 
-提取 Svelte 组件的元信息，包括 props、源码、编译警告等。
+Extracts Svelte component metadata including props, source code, and compile warnings.
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `sassModule` | `object` | 自动导入 | 手动传入 sass 模块 |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `sassModule` | `object` | Auto-imported | Manually provide sass module |
 
 ```js
-// 构建配置
+// Build config
 plugins: [metaPlugin()]
 
-// 使用：在代码中通过 ?meta 后缀导入
+// Usage: import via ?meta suffix
 import meta from './Button.svelte?meta'
 // meta = {
 //   filename: 'Button.svelte',
-//   source: '完整源码',
+//   source: 'full source code',
 //   props: ['type', 'size', 'disabled', ...],
 //   warnings: [...],
 //   metadata: { ... }
 // }
 ```
 
+### `obfuscatorPlugin(options?)`
+
+Obfuscates JavaScript output with RC4 encryption, control flow flattening, and dead code injection. Requires `javascript-obfuscator` as an optional dependency.
+
+```js
+import { obfuscatorPlugin } from 'esbuild-loader-svelte/obfuscator'
+
+await esbuild.build({
+    entryPoints: ['src/main.ts'],
+    bundle: true,
+    outdir: 'dist',
+    plugins: [obfuscatorPlugin()],
+})
+```
+
 ### `renderTemplate(name, vars)`
 
-读取模板文件并替换 `{{KEY}}` 占位符。
+Reads a template file and replaces `{{KEY}}` placeholders.
 
 ```js
 import { renderTemplate } from 'esbuild-loader-svelte'
 
 const html = renderTemplate('html.html', {
-    TITLE: '页面标题',
+    TITLE: 'Page Title',
     JS_FILE: 'main.abc123.js',
     CSS_LINK: '<link rel="stylesheet" href="./assets/style.css" />',
     SSR_HEAD: '',
-    SSR_BODY: '<div>预渲染内容</div>',
+    SSR_BODY: '<div>Pre-rendered content</div>',
 })
 ```
 
 ### `readTemplate(name)`
 
-读取模板文件原始内容（不替换占位符）。
+Reads template file content without placeholder replacement.
 
 ### `setTemplatesDir(dir)`
 
-设置自定义模板目录，用于覆盖默认模板。
+Sets a custom template directory to override default templates.
 
 ```js
 import { setTemplatesDir } from 'esbuild-loader-svelte'
 setTemplatesDir('/path/to/my/templates')
 ```
 
-## 内置模板文件
+## Built-in Template Files
 
-| 文件名 | 用途 |
-|--------|------|
-| `html.html` | HTML 页面模板 |
-| `client-entry.js` | 客户端入口模板 |
-| `ssr-entry.js` | SSR 入口模板（含浏览器 API 空桩） |
-| `ssr-stub.js` | JS 模块空桩（路由等） |
-| `ssr-stub-svelte.js` | Svelte 组件空桩 |
-| `ssr-fallback.html` | SSR 渲染失败时的骨架屏 |
+| File | Purpose |
+|------|---------|
+| `html.html` | HTML page template |
+| `client-entry.js` | Client entry template |
+| `ssr-entry.js` | SSR entry template (with browser API stubs) |
+| `ssr-stub.js` | JS module stub (router, etc.) |
+| `ssr-stub-svelte.js` | Svelte component stub |
+| `ssr-fallback.html` | SSR render failure skeleton |
 
 ## License
 
