@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="{{LANG}}">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="{{DESCRIPTION}}" />
+    <title>{{TITLE}}</title>
+    {{CSS_LINK}}
+    {{SSR_HEAD}}
+    {{EXTRA_HEAD}}
+</head>
+
+<body>
+    <div id="app">{{SSR_BODY}}</div>
+    <script type="module" src="./assets/{{JS_FILE}}"></script>
+</body>
+
+</html>
