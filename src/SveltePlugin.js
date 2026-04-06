@@ -1,4 +1,4 @@
-import { compile, preprocess } from 'svelte/compiler'
+import { compile, compileModule, preprocess } from 'svelte/compiler'
 import { transform } from 'esbuild'
 import path from 'path'
 import fs from 'fs'
@@ -18,13 +18,43 @@ export function sveltePlugin(options = {}) {
     return {
         name: 'svelte',
         setup(build) {
-            // 解析 .svelte 文件
-            build.onResolve({ filter: /\.svelte$/ }, (args) => ({
-                path: path.isAbsolute(args.path)
+            // 解析 .svelte 文件（同时支持 .svelte.ts 模块）
+            build.onResolve({ filter: /\.svelte$/ }, (args) => {
+                const resolved = path.isAbsolute(args.path)
                     ? args.path
-                    : path.resolve(args.resolveDir, args.path),
-                namespace: 'file',
-            }))
+                    : path.resolve(args.resolveDir, args.path)
+
+                // 优先匹配 .svelte.ts 模块文件
+                if (fs.existsSync(resolved + '.ts')) {
+                    return { path: resolved + '.ts', namespace: 'file' }
+                }
+
+                return { path: resolved, namespace: 'file' }
+            })
+
+            // 编译 .svelte.ts 模块文件（Svelte 5 Runes 模块）
+            build.onLoad({ filter: /\.svelte\.ts$/ }, async (args) => {
+                const source = fs.readFileSync(args.path, 'utf-8')
+
+                // 先用 esbuild 将 TS 转成 JS
+                const tsResult = await transform(source, {
+                    loader: 'ts',
+                    tsconfigRaw: '{ "compilerOptions": { "verbatimModuleSyntax": true } }',
+                })
+
+                // 使用 compileModule 编译 Svelte 模块
+                const compiled = compileModule(tsResult.code, {
+                    filename: args.path,
+                    generate,
+                    dev: false,
+                })
+
+                return {
+                    contents: compiled.js.code,
+                    loader: 'js',
+                    resolveDir: path.dirname(args.path),
+                }
+            })
 
             // 编译 .svelte 文件
             build.onLoad({ filter: /\.svelte$/ }, async (args) => {
