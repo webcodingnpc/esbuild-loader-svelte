@@ -41,9 +41,10 @@ export function metaPlugin(options = {}) {
                 const preprocessors = [
                     {
                         script: async ({ content, attributes }) => {
-                            if (attributes.lang !== 'ts') return
+                            if (attributes.lang !== 'ts' && attributes.lang !== 'typescript') return
                             const result = await transform(content, {
                                 loader: 'ts',
+                                sourcefile: filename,
                                 tsconfigRaw: '{ "compilerOptions": { "verbatimModuleSyntax": true } }',
                             })
                             return { code: result.code }
@@ -81,13 +82,13 @@ export function metaPlugin(options = {}) {
                     dev: false,
                 })
 
-                // 从源码中提取 $props() 定义的属性名
-                const propsMatch = source.match(/let\s*\{([^}]+)\}\s*=\s*\$props\(\)/)
+                // 从源码中提取 $props() 定义的属性名（支持多行、类型注解、默认值）
+                const propsMatch = source.match(/let\s*\{([\s\S]*?)\}\s*(?::\s*\{[\s\S]*?\})?\s*=\s*\$props\(\)/)
                 const props = propsMatch
                     ? propsMatch[1]
                         .split(',')
-                        .map((p) => p.trim().split(/[=:]/)[0].trim())
-                        .filter(Boolean)
+                        .map((p) => p.trim().split(/[\s=:]/)[0].trim())
+                        .filter((p) => p && !p.startsWith('...'))
                     : []
 
                 const meta = {

@@ -81,7 +81,7 @@ export function obfuscatorPlugin(config = {}) {
                     // 从 metafile 获取输出文件
                     if (result.metafile) {
                         for (const outputPath of Object.keys(result.metafile.outputs)) {
-                            if (outputPath.endsWith('.js')) {
+                            if (outputPath.endsWith('.js') || outputPath.endsWith('.mjs')) {
                                 outputPaths.push(outputPath)
                             }
                         }
@@ -90,13 +90,13 @@ export function obfuscatorPlugin(config = {}) {
                         if (fs.existsSync(outdir)) {
                             const files = fs.readdirSync(outdir)
                             for (const file of files) {
-                                if (file.endsWith('.js')) {
+                                if (file.endsWith('.js') || file.endsWith('.mjs')) {
                                     outputPaths.push(path.join(outdir, file))
                                 }
                             }
                         }
                     }
-                } else if (outfile && outfile.endsWith('.js')) {
+                } else if (outfile && (outfile.endsWith('.js') || outfile.endsWith('.mjs'))) {
                     outputPaths.push(outfile)
                 }
 

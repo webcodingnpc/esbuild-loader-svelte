@@ -72,6 +72,10 @@ Compiles `.svelte` files to JavaScript.
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `generate` | `'client' \| 'server'` | `'client'` | Compilation mode |
+| `dev` | `boolean` | `false` | Enable dev mode (better error messages) |
+| `runes` | `boolean` | `true` | Enable Svelte 5 runes mode |
+| `css` | `'injected' \| 'external' \| 'none'` | `'injected'` | CSS handling mode |
+| `sourcemap` | `boolean` | `false` | Generate inline source maps |
 | `sassModule` | `object` | Auto-imported | Manually provide sass module |
 | `filterWarnings` | `(code: string) => boolean` | Filters a11y warnings | Return `true` to silence warning |
 

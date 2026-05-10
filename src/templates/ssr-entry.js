@@ -3,14 +3,19 @@ if (typeof globalThis.document === 'undefined') {
     const noop = () => { }
     globalThis.document = {
         getElementById: () => null,
-        createElement: () => ({ style: {}, appendChild: noop }),
-        body: { appendChild: noop, style: {} },
-        head: { appendChild: noop },
+        createElement: () => ({ style: {}, appendChild: noop, setAttribute: noop, removeAttribute: noop }),
+        createTextNode: () => ({}),
+        createComment: () => ({}),
+        createDocumentFragment: () => ({ appendChild: noop }),
+        body: { appendChild: noop, removeChild: noop, style: {} },
+        head: { appendChild: noop, removeChild: noop },
         documentElement: { style: {} },
         querySelector: () => null,
         querySelectorAll: () => [],
         addEventListener: noop,
         removeEventListener: noop,
+        createEvent: () => ({ initEvent: noop }),
+        cookie: '',
     }
 }
 if (typeof globalThis.window === 'undefined') {
@@ -18,12 +23,34 @@ if (typeof globalThis.window === 'undefined') {
     globalThis.window = {
         addEventListener: noop,
         removeEventListener: noop,
+        dispatchEvent: noop,
         getComputedStyle: () => new Proxy({}, { get: () => '' }),
+        requestAnimationFrame: (cb) => setTimeout(cb, 16),
+        cancelAnimationFrame: (id) => clearTimeout(id),
+        matchMedia: () => ({ matches: false, addEventListener: noop, removeEventListener: noop, addListener: noop, removeListener: noop }),
         innerWidth: 1024,
         innerHeight: 768,
+        scrollX: 0,
+        scrollY: 0,
+        scrollTo: noop,
         document: globalThis.document,
-        navigator: { userAgent: '' },
+        navigator: { userAgent: '', language: 'en' },
+        location: { href: '', pathname: '/', search: '', hash: '', origin: '' },
+        history: { pushState: noop, replaceState: noop, back: noop, forward: noop, go: noop },
+        localStorage: { getItem: () => null, setItem: noop, removeItem: noop, clear: noop },
+        sessionStorage: { getItem: () => null, setItem: noop, removeItem: noop, clear: noop },
+        setTimeout: globalThis.setTimeout,
+        clearTimeout: globalThis.clearTimeout,
+        setInterval: globalThis.setInterval,
+        clearInterval: globalThis.clearInterval,
     }
+}
+if (typeof globalThis.navigator === 'undefined') {
+    globalThis.navigator = { userAgent: '', language: 'en' }
+}
+if (typeof globalThis.requestAnimationFrame === 'undefined') {
+    globalThis.requestAnimationFrame = (cb) => setTimeout(cb, 16)
+    globalThis.cancelAnimationFrame = (id) => clearTimeout(id)
 }
 
 import { render } from 'svelte/server'

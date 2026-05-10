@@ -1,9 +1,12 @@
 import '{{GLOBAL_SCSS}}'
-import { hydrate } from 'svelte'
+import { mount, hydrate } from 'svelte'
 import App from '{{VIEW_PATH}}'
 
-const app = hydrate(App, {
-    target: document.getElementById('app'),
-})
+const target = document.getElementById('app')
+const isHydrate = target && target.hasAttribute('data-svelte-hydrate')
+
+const app = isHydrate
+    ? hydrate(App, { target })
+    : mount(App, { target })
 
 export default app

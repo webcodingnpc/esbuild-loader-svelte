@@ -66,6 +66,10 @@ const { sveltePlugin, scssPlugin, rawPlugin, metaPlugin } = require('esbuild-loa
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `generate` | `'client' \| 'server'` | `'client'` | 编译模式 |
+| `dev` | `boolean` | `false` | 开启开发模式（更好的错误信息） |
+| `runes` | `boolean` | `true` | 开启 Svelte 5 runes 模式 |
+| `css` | `'injected' \| 'external' \| 'none'` | `'injected'` | CSS 处理模式 |
+| `sourcemap` | `boolean` | `false` | 生成内联 source map |
 | `sassModule` | `object` | 自动导入 | 手动传入 sass 模块 |
 | `filterWarnings` | `(code: string) => boolean` | 过滤 a11y 警告 | 返回 `true` 则静默该警告 |
 
